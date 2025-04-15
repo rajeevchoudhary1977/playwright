@@ -1,0 +1,12 @@
+.test-logs-container {
+  height: 67vh;
+  overflow-y: auto;
+  
+  .mtkcontrol {
+    display: none;
+  }
+
+  .monaco-editor .unexpected-closing-bracket {
+    color: #d4d4d4;
+  }
+}

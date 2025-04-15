@@ -1,0 +1,169 @@
+[
+  {
+    "device": "Desktop Chrome",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.4 Safari/537.36",
+    "screen": {
+      "width": 1440,
+      "height": 900
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "chromium",
+    "name": "chromium"
+  },
+  {
+    "device": "Desktop Edge",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.4 Safari/537.36 Edg/125.0.6422.4",
+    "screen": {
+      "width": 1440,
+      "height": 900
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "chromium",
+    "name": "chromium"
+  },
+  {
+    "device": "Desktop Firefox",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0.1) Gecko/20100101 Firefox/125.0.1",
+    "screen": {
+      "width": 1440,
+      "height": 900
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "firefox",
+    "name": "firefox"
+  },
+  {
+    "device": "Desktop Safari",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    "screen": {
+      "width": 1280,
+      "height": 960
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "webkit",
+    "name": "webkit"
+  },
+  {
+    "device": "Pixel 4",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.4 Mobile Safari/537.36",
+    "viewport": {
+      "width": 353,
+      "height": 745
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium",
+    "name": "Mobile Chrome"
+  },
+  {
+    "device": "Pixel 5",
+    "userAgent": "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.4 Mobile Safari/537.36",
+    "screen": {
+      "width": 393,
+      "height": 851
+    },
+    "viewport": {
+      "width": 393,
+      "height": 727
+    },
+    "deviceScaleFactor": 2.75,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium",
+    "name": "Mobile Chrome"
+  },
+  {
+    "device": "Pixel 7",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.4 Mobile Safari/537.36",
+    "screen": {
+      "width": 412,
+      "height": 915
+    },
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "deviceScaleFactor": 2.625,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium",
+    "name": "Mobile Chrome"
+  },
+  {
+    "device": "iPhone 12",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 390,
+      "height": 664
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit",
+    "name": "Mobile Safari"
+  },
+  {
+    "device": "iPhone 13",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 390,
+      "height": 664
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit",
+    "name": "Mobile Safari"
+  },
+  {
+    "device": "iPhone 14",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 390,
+      "height": 664
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit",
+    "name": "Mobile Safari"
+  }
+
+]

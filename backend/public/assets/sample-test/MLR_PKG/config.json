@@ -1,0 +1,21 @@
+{
+  "mlrPageByPage": false,
+  "mainUrl": "",
+  "sitemapUrl": "sitemap",
+  "testTimeout": 4000000,
+  "testScreenshotTimeout": 1000000,
+  "hcp_box": false,
+  "hcp_box_selector": "#onetrust-accept-btn-handler",
+  "one_trust_box": false,
+  "one_trust_box_dev": false,
+  "one_trust_selector": "#onetrust-accept-btn-handler",
+  "isi_tray_exist": false,
+  "isi_tray_selector": "#isi-tray",
+  "home_page_hover_selector": "",
+  "dropdwn_menu_item_selector": "",
+  "dropdown_menu_item_action": "hover",
+  "accordion_url": "",
+  "accordion_url_selector": ".accord-content",
+  "tab_url": "",
+  "tab_selector": ".accord-content"
+}

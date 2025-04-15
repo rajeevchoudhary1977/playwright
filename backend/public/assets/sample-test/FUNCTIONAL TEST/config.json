@@ -1,0 +1,12 @@
+{
+  "mainUrl": "",
+  "testTimeout": 400000,
+  "testScreenshotTimeout": 10000,
+  "hcp_box": true,
+  "hcp_box_selector": "#hcp-confirm-btn-yes",
+  "one_trust_box": true,
+  "one_trust_box_dev": false,
+  "one_trust_selector": "#onetrust-accept-btn-handler",
+  "isi_tray_exist": true,
+  "isi_tray_selector": ".isi-container"
+}

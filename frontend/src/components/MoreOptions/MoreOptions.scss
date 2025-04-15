@@ -1,0 +1,12 @@
+.switch-container {
+  display: flex;
+  padding-top: 0.3em;
+
+  input {
+    transform: scale(1.5);
+  }
+}
+
+.switch-label {
+  font-size: 16px;
+}

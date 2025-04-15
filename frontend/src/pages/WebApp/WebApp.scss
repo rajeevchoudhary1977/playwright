@@ -1,0 +1,345 @@
+.tests-container {
+  .test-card {
+    .thumbnail {
+      overflow: hidden;
+      position: relative;
+
+      .test-name {
+        font-size: 0.775em;
+        background-color: #ddd;
+        color: #034ea2;
+      }
+
+      .img {
+        height: 200px;
+        background-position: top left;
+        background-size: 100%;
+        background-repeat: no-repeat;
+      }
+
+      img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        min-height: 86px;
+      }
+    }
+
+    .card {
+      .card-body {
+        padding: unset;
+        background-color: #fff;
+      }
+    }
+
+    a {
+      display: inline-block;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    button {
+      background-color: #034ea2;
+      color: #fff;
+      border-radius: 20%;
+      padding: 0px;
+      width: 25px;
+      height: 25px;
+      border: 0px;
+
+      &:hover {
+        background-color: #ed0677;
+      }
+    }
+
+    .thumbnail:hover .overlay {
+      opacity: 1;
+    }
+
+    .options {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+      width: 80%;
+
+      a.disabled {
+        pointer-events: none;
+        cursor: not-allowed;
+
+        button {
+          background-color: darkgray;
+          color: #4c4b4b;
+        }
+      }
+    }
+
+    .show-options {
+      display: block;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .card-footer {
+      small,
+      .small {
+        color: rgb(100, 102, 116);
+        font-size: x-small;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+.web-app-page {
+  .modal-header {
+    margin-bottom: 0px !important;
+    padding-bottom: 10px;
+    justify-content: flex-start;
+    padding-left: 10px;
+    h3 {
+      display: none;
+    }
+    .modal-title {
+      font-size: 18px;
+      color: #034ea2;
+    }
+  }
+  .tests-container {
+    background-color: #f0f0f0 !important;
+    border-left: 1px solid #d0d0cf;
+    border-bottom: 1px solid #d0d0cf;
+    padding: 10px !important;
+    border-radius: 0px !important;
+    height: 100%;
+
+    .row {
+      &:last-child {
+        .col-2 {
+          padding-right: unset;
+          padding-left: 10px;
+          padding-top: 0px;
+        }
+      }
+    }
+
+    h5 {
+      font-size: 16px;
+      color: #034ea2;
+    }
+  }
+}
+
+.test-category-container {
+  .btn {
+    font-size: 13px;
+    padding: 10px;
+    background-color: transparent;
+    border-radius: 0px;
+    margin-left: 10px;
+    border: 1px solid #d0d0cf;
+
+    &.active {
+      background-color: #ed0677;
+      cursor: auto;
+      color: #fff;
+    }
+
+    &:not(.active):hover {
+      background-color: #034ea2;
+      border: 1px solid #034ea2;
+      color: #fff;
+    }
+  }
+}
+
+.web-apps-container {
+  height: 83vh;
+  overflow-y: auto;
+  padding: 0px !important;
+
+  .badge {
+    top: unset;
+    border-radius: 0px;
+    background-color: #ed0677 !important;
+  }
+
+  .web-app-name {
+    word-break: break-all;
+    text-align: left;
+  }
+  .web-apps-collection {
+    .btn {
+      padding: 10px 0px;
+      background-color: transparent;
+      border: 0px;
+      border-bottom: 1px solid #d0d0cf;
+      border-radius: 0px;
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+    .btn.active {
+      background-color: #d0d0cf;
+    }
+  }
+  .gap-2 {
+    gap: 0px !important;
+  }
+
+  .test-card {
+    .card {
+      border-radius: 0px;
+    }
+    .test-name {
+      background-color: #dddddd;
+      color: #034ea2;
+      padding: 5px 0px;
+    }
+  }
+}
+
+.badge.text-bg-secondary {
+  background-color: #034ea2 !important;
+}
+
+.web-apps-container::-webkit-scrollbar,
+.tests-container::-webkit-scrollbar {
+  width: 6px;
+  padding-left: 10px;
+  background-color: rgb(223 223 208);
+  border-radius: 10px;
+}
+
+.web-apps-container::-webkit-scrollbar-thumb,
+.tests-container::-webkit-scrollbar-thumb {
+  background-color: #9d9d93;
+  border-radius: 10px;
+}
+
+/* Track */
+.web-apps-container::-webkit-scrollbar-track,
+.tests-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+.web-apps-container::-webkit-scrollbar-thumb,
+.tests-container::-webkit-scrollbar-thumb {
+  background: #000;
+}
+
+/* Handle on hover */
+.web-apps-container::-webkit-scrollbar-thumb:hover,
+.tests-container::-webkit-scrollbar-thumb:hover {
+  background: #034ea2;
+}
+
+.web-app-menu-items {
+  padding: unset;
+  border-radius: 0px;
+  background-color: #fff;
+
+  .web-app-menu-item {
+    cursor: pointer;
+
+    &:hover {
+      background-color: #ed0677;
+      color: #fff;
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #d0d0cf;
+    }
+  }
+
+  .web-app-creator-name {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 123px;
+    text-overflow: ellipsis;
+  }
+}
+
+.create-web-app-btn {
+  background-color: #fff;
+  border: 1px solid #d0d0cf !important;
+  font-size: 13px;
+  color: #000;
+  border-radius: 0px !important;
+  padding: 5px 10px;
+
+  &:hover {
+    background-color: #034ea2;
+    border: 1px solid #034ea2 !important;
+    color: #fff;
+  }
+}
+
+.web-app-page {
+  .engagement-filter-container {
+    display: flex;
+    align-items: flex-start;
+    padding-left: 0px;
+    width: 100%;
+  }
+
+  .row {
+    &:first-child {
+      .col-2 {
+        padding-right: unset;
+        padding-left: 0px;
+        padding-top: 10px;
+      }
+      .col-10 {
+        padding-left: 0px;
+        border-bottom: 1px solid #d0d0cf;
+        border-left: 1px solid #d0d0cf;
+        // padding-top: 10px;
+        display: flex;
+        align-items: center;
+      }
+      .btn_sec {
+        padding-left: 10px;
+      }
+    }
+    &:last-child {
+      .col-2 {
+        padding-right: unset;
+        padding-left: 0px;
+        padding-top: 0px;
+      }
+      .col-10 {
+        padding-left: 0px;
+      }
+    }
+  }
+}
+
+.preview-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.user-test-num-container, .total-test-num-container {
+  background-color: #034ea2;
+  color: #fff;
+
+  span {
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+button.more-options {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #d0d0cf !important;
+
+  &:hover {
+    background-color: #034ea2;
+    color: #fff;
+  }
+}

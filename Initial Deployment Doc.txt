@@ -1,0 +1,30 @@
+Backend:
+  1. Take update.
+
+  2. Create a .env file in backend and place the below data. Modify API_HOST, DOMAIN, MONGO_URI and ENGAGEMENTS according to new server configuration.
+    API_HOST=http://localhost:8080
+    JWT_KEY=NF94IblxGUlElV9kXlvr
+    DOMAIN=http://localhost:8080
+    SENDGRID_API_KEY=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
+    FILE_SIZE_LIMIT=30000000
+    MONGO_URI=mongodb://127.0.0.1:27017/test-automation
+    ENVIRONMENT=DEV
+    PORT=8080
+    TESTS_LIMIT=15
+    ENGAGEMENTS=[]
+
+  3. Run npm i to install all packages. Then run npx playwright install.
+
+Frontend:
+  1. Take update.
+
+  2. Run npm i
+  
+  3. Copy webpack.config.js from src/settings to node_modules/react-scripts/config
+
+  4. Create a config.js in src/configs. Copy the following code into it:
+      export const DOMAIN = "http://localhost:8080";
+      // export const DOMAIN = "";
+      export const API_HOST = `${DOMAIN}/api/`;
+
+  5. Run npm run build and place build folder in backend.

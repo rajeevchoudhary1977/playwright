@@ -1,0 +1,14 @@
+.code-tabs {
+  button {
+    background-color: #034ea2;
+
+    &[disabled] {
+      background-color: #ed0677;
+      opacity: 1;
+    }
+  }
+}
+
+div[role="dialog"]:has(> #visual-test-info-modal) {
+  background-color: rgba(0, 0, 0, 0.8);
+}

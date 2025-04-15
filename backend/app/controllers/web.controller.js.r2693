@@ -1,0 +1,848 @@
+import fs, { readJSON } from "fs-extra";
+import path from "path";
+import zipper from "zip-local";
+
+import {
+  createTestService,
+  createWebAppService,
+  deleteTestService,
+  deleteWebAppService,
+  getTestByNameService,
+  getTestLogService,
+  getTotalTestsService,
+  getUserTestsService,
+  getWebAppByNameService,
+  listWebAppsService,
+  renameTestService,
+  renameWebAppService,
+  updateWebAppEngagementService,
+} from "../services/web.services.js";
+import agenda from "../jobs/index.js";
+import { TESTS_LIMIT, TEST_CATEGORIES, TEST_STATUS_OPTS } from "../configs/config.js";
+import { updateJSON } from "../utils/helpers.js";
+
+export const listWebApps = async (req, res) => {
+  const { userId, isAdmin } = req.user;
+  
+  const { show_user_tests: showUserTests, select_user: selectUser } = req.query;
+  
+  const webApps = await listWebAppsService(userId, isAdmin, JSON.parse(showUserTests), selectUser);
+
+  const userTests = await getUserTestsService(req.user.userId);
+
+  const responseJson = { isSuccess: true, webApps, userTests };
+
+  if(isAdmin) {
+    const totalTests = await getTotalTestsService();
+    responseJson.totalTests = totalTests;
+  }
+
+  return res.json(responseJson);
+};
+
+export const createWebApp = async (req, res) => {
+  const { body } = req;
+  body.user = req.user.userId;
+
+  const preExistingWebApp = await getWebAppByNameService(body.name, body.engagement);
+
+  if (preExistingWebApp) {
+    return res.json({
+      isSuccess: false,
+      preExistingWebApp: preExistingWebApp,
+    });
+  }
+
+  const webApp = await createWebAppService(body);
+
+  if (webApp) {
+    const webAppPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name);
+
+    await fs.ensureDir(webAppPath);
+
+    return res.json({ isSuccess: true, msg: "Web App is created!" });
+  } else {
+    return res.json({
+      isSuccess: false,
+      msg: "Unable to create the Web App, Please check with Admin!",
+    });
+  }
+};
+
+export const createTest = async (req, res) => {
+  const { body, webApp } = req;
+  const { wId } = req.params;
+
+  const numOfUserTests = await getUserTestsService(req.user.userId);
+
+  if (numOfUserTests >= TESTS_LIMIT) {
+    return res.json({
+      isSuccess: false,
+      msg: "Maximum no. of tests created.\nPlease delete at least one test to create a new one.",
+    });
+  }
+
+  const preExistingTest = await getTestByNameService(body.name, body.category, wId);
+
+  if (preExistingTest) {
+    return res.json({
+      isSuccess: false,
+      preExistingTest: preExistingTest,
+    });
+  }
+
+  switch (body.category) {
+    case TEST_CATEGORIES.REGRESSION_TEST: {
+      const { testTimeout, jsonCode, playwrightConfigTsCode, ...testBody } = body;
+      testBody.refUrl = body.refUrl || null;
+
+      testBody.user = req.user.userId;
+      testBody.webApp = wId;
+      testBody.status = TEST_STATUS_OPTS.FAILED;
+
+      const test = await createTestService(testBody, wId);
+      if (test) {
+        const srcPath = path.join(__dirname, "../../public/assets/sample-test", test.category);
+
+        const destPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category, test.name);
+
+        await fs.copy(srcPath, destPath);
+
+        const jsonToUpdate = { mainUrl: test.mainUrl, testTimeout: parseInt(testTimeout) };
+        if (test.refUrl) jsonToUpdate.refUrl = test.refUrl;
+
+        const testConfigJsonPath = path.join(destPath, "config.json");
+        await fs.writeFile(testConfigJsonPath, jsonCode, "utf-8");
+        await updateJSON(testConfigJsonPath, jsonToUpdate);
+
+        const playwrightConfigTsPath = path.join(destPath, "playwright.config.ts");
+        await fs.writeFile(playwrightConfigTsPath, playwrightConfigTsCode, "utf-8");
+
+        await agenda.now("generate-test-report", {
+          webApp: webApp,
+          test: test,
+        });
+
+        return res.json({ isSuccess: true, msg: "Test Report generation has started!!" });
+      } else
+        return res.json({
+          isSuccess: false,
+          msg: "Test Report generation unsuccessful!!! Please try again later",
+        });
+    }
+
+    case TEST_CATEGORIES.VISUAL_TEST: {
+      const { jsonCode, /* playwrightConfigTsCode,*/ pageByPage, pageByPageUrls, refImgs, isMobile, selectedDevice, screenWidth, testTimeout, ...testBody } = body;
+      testBody.refUrl = body.refUrl || null;
+
+      testBody.user = req.user.userId;
+      testBody.webApp = wId;
+      testBody.status = TEST_STATUS_OPTS.FAILED;
+
+      const test = await createTestService(testBody, wId);
+      if (test) {
+        const srcPath = path.join(__dirname, "../../public/assets/sample-test", test.category);
+
+        const destPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category, test.name);
+
+        await fs.copy(srcPath, destPath);
+
+        const jsonToUpdate = { mainUrl: test.mainUrl, testTimeout: parseInt(testTimeout) };
+
+        if (test.refUrl) {
+          jsonToUpdate.refUrl = test.refUrl;
+        }
+
+        if (pageByPage && pageByPageUrls) {
+          jsonToUpdate.pageByPage = true;
+          jsonToUpdate.pageByPageUrls = pageByPageUrls.split(",");
+        } else {
+          jsonToUpdate.pageByPage = false;
+          jsonToUpdate.pageByPageUrls = [];
+        }
+
+        if(isMobile && JSON.parse(isMobile) === true) {
+          jsonToUpdate.isMobile = true;
+        } else {
+          jsonToUpdate.isMobile = false;
+        }
+
+        if(screenWidth) {
+          jsonToUpdate.screen_width = parseInt(screenWidth);
+        }
+
+        const testConfigJsonPath = path.join(destPath, "config.json");
+        await fs.writeFile(testConfigJsonPath, jsonCode, "utf-8");
+        await updateJSON(testConfigJsonPath, jsonToUpdate);
+
+        // const playwrightConfigTsPath = path.join(destPath, "playwright.config.ts");
+        // await fs.writeFile(playwrightConfigTsPath, playwrightConfigTsCode, "utf-8");
+
+        if (req.files && req.files.refImgs) {
+          const refImgDirPath = path.join(destPath, "ref-images");
+          await fs.ensureDir(refImgDirPath);
+
+          if (!Array.isArray(req.files.refImgs)) req.files.refImgs = [req.files.refImgs];
+
+          for (const img of req.files.refImgs) {
+            const imgPath = path.join(refImgDirPath, img.name.replace(".PNG", ".png"));
+            await fs.writeFile(imgPath, img.data, "utf-8");
+          }
+        }
+
+        if(selectedDevice) {
+          const parsedSelectedDevice = JSON.parse(selectedDevice);
+          const browserJson = {
+            name: parsedSelectedDevice.name,
+            device: parsedSelectedDevice.device
+          };
+
+          const browserJsonPath = path.join(destPath, "browser.json");
+          await updateJSON(browserJsonPath, browserJson);
+        }
+
+        // create new job for running playwright using exec
+        await agenda.now("generate-test-report", {
+          webApp: webApp,
+          test: test,
+        });
+
+        return res.json({ isSuccess: true, msg: "Test Report generation has started!!" });
+      } else
+        return res.json({
+          isSuccess: false,
+          msg: "Test Report generation unsuccessful!!! Please try again later",
+        });
+    }
+
+    case TEST_CATEGORIES.MLR_PKG: {
+      const { testTimeout, jsonCode, playwrightConfigTsCode, ...testBody } = body;
+      testBody.refUrl = body.refUrl || null;
+
+      testBody.user = req.user.userId;
+      testBody.webApp = wId;
+      testBody.status = TEST_STATUS_OPTS.FAILED;
+
+      const test = await createTestService(testBody, wId);
+      if (test) {
+        const srcPath = path.join(__dirname, "../../public/assets/sample-test", test.category);
+
+        const destPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category, test.name);
+
+        await fs.copy(srcPath, destPath);
+
+        const jsonToUpdate = { mainUrl: test.mainUrl, testTimeout: parseInt(testTimeout) };
+        if (test.refUrl) jsonToUpdate.refUrl = test.refUrl;
+
+        const testConfigJsonPath = path.join(destPath, "config.json");
+        await fs.writeFile(testConfigJsonPath, jsonCode, "utf-8");
+        await updateJSON(testConfigJsonPath, jsonToUpdate);
+
+        const playwrightConfigTsPath = path.join(destPath, "playwright.config.ts");
+        await fs.writeFile(playwrightConfigTsPath, playwrightConfigTsCode, "utf-8");
+
+        await agenda.now("generate-test-report", {
+          webApp: webApp,
+          test: test,
+        });
+
+        return res.json({ isSuccess: true, msg: "Test Report generation has started!!" });
+      } else
+        return res.json({
+          isSuccess: false,
+          msg: "Test Report generation unsuccessful!!! Please try again later",
+        });
+    }
+    
+    case TEST_CATEGORIES.FUNCTIONAL_TEST: {
+      const { functionalSpecTsCode, ...testBody } = body;
+      testBody.refUrl = body.refUrl || null;
+
+      testBody.user = req.user.userId;
+      testBody.webApp = wId;
+      testBody.status = TEST_STATUS_OPTS.FAILED;
+
+      const test = await createTestService(testBody, wId);
+      if (test) {
+        const srcPath = path.join(__dirname, "../../public/assets/sample-test", test.category);
+
+        const destPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category, test.name);
+
+        await fs.copy(srcPath, destPath);
+
+        const jsonToUpdate = { mainUrl: test.mainUrl };
+        if (test.refUrl) jsonToUpdate.refUrl = test.refUrl;
+
+        const testConfigJsonPath = path.join(destPath, "config.json");
+        await updateJSON(testConfigJsonPath, jsonToUpdate);
+
+        const functionalSpecTsPath = path.join(destPath, "tests/functional.spec.ts");
+        await fs.writeFile(functionalSpecTsPath, functionalSpecTsCode, "utf-8");
+
+        await agenda.now("generate-test-report", {
+          webApp: webApp,
+          test: test,
+        });
+
+        return res.json({ isSuccess: true, msg: "Test Report generation has started!!" });
+      } else
+        return res.json({
+          isSuccess: false,
+          msg: "Test Report generation unsuccessful!!! Please try again later",
+        });
+    }
+
+    default: {
+      return res.json({
+        isSuccess: false,
+        msg: "Feature under development for this category!!!",
+      });
+    }
+  }
+};
+
+export const generateTestReportController = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const testPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category, test.name);
+
+  const playwrightReportPath = path.join(testPath, "playwright-report");
+  const testResultsPath = path.join(testPath, "test-results");
+  const exampleSpecSnapshotsPath = path.join(testPath, "tests/example.spec.ts-snapshots");
+  const outputPdfPath = path.join(testPath, "tests/output");
+
+  await fs.emptyDir(playwrightReportPath);
+  await fs.remove(testResultsPath);
+  await fs.emptyDir(exampleSpecSnapshotsPath);
+  await fs.emptyDir(outputPdfPath);
+
+  await agenda.now("generate-test-report", {
+    webApp: webApp,
+    test: test,
+  });
+
+  return res.json({ isSuccess: true, msg: "Test Report generation has started!!" });
+};
+
+export const getConfigJson = async (req, res) => {
+  const { category } = req.params;
+  const sampleConfigJsonPath = path.join(__dirname, "../../public/assets/sample-test/", TEST_CATEGORIES[category], "config.json");
+
+  if(!fs.existsSync(sampleConfigJsonPath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "File not found!!!"
+    });
+  }
+
+  const configJsonText = await fs.readFile(sampleConfigJsonPath, "utf-8");
+
+  return res.json({
+    isSuccess: true,
+    jsonText: configJsonText,
+  });
+};
+
+export const getSamplePlaywrightConfigCode = async (req, res) => {
+  const { category } = req.params;
+  const samplePlaywrightConfigTsCodePath = path.join(
+    __dirname,
+    "../../public/assets/sample-test/",
+    TEST_CATEGORIES[category],
+    "playwright.config.ts"
+  );
+
+  if(!fs.existsSync(samplePlaywrightConfigTsCodePath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "File not found!!!"
+    });
+  }
+
+  const playwrightConfigTsCodeText = await fs.readFile(samplePlaywrightConfigTsCodePath, "utf-8");
+
+  return res.json({
+    isSuccess: true,
+    codeText: playwrightConfigTsCodeText,
+  });
+};
+
+export const getSampleFunctionalSpecTsCode = async (req, res) => {
+  const { category } = req.params;
+  const sampleFunctionalSpecTsCodePath = path.join(
+    __dirname,
+    "../../public/assets/sample-test",
+    TEST_CATEGORIES[category],
+    "tests/functional.spec.ts"
+  );
+
+  if(!fs.existsSync(sampleFunctionalSpecTsCodePath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "File not found!!!"
+    });
+  }
+
+  const playwrightConfigTsCodeText = await fs.readFile(sampleFunctionalSpecTsCodePath, "utf-8");
+
+  return res.json({
+    isSuccess: true,
+    codeText: playwrightConfigTsCodeText,
+  });
+};
+
+export const deleteTest = async (req, res) => {
+  const { wId, tId } = req.params;
+  const { test } = req;
+  const { webApp } = test;
+
+  await deleteTestService(tId, wId);
+
+  const testCategoryPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category);
+
+  const testPath = path.join(testCategoryPath, test.name);
+
+  await fs.remove(testPath);
+
+  const testCategoryContents = await fs.readdir(testCategoryPath);
+  if (testCategoryContents.length === 0) await fs.remove(testCategoryPath);
+
+  return res.json({
+    isSuccess: true,
+    msg: `Test Report: ${test.name} deleted successfully!!`,
+  });
+};
+
+export const filesForView = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const destPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "playwright-report",
+    req.params[0] || "index.html"
+  );
+
+  if (fs.existsSync(destPath)) return res.sendFile(destPath);
+  return res.send("<html><h1>File Not Found!!!</h1></html>");
+};
+
+export const getTestLog = async (req, res) => {
+  const logs = await getTestLogService(req.params.tId);
+  return res.json({
+    isSuccess: true,
+    testLog: logs,
+    testStatus: req.test.status,
+  });
+};
+
+export const downloadTestReport = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const testPath = path.join(__dirname, "../../public/web_apps", webApp.engagement, webApp.name, test.category, test.name);
+  const downloadPath = path.join(__dirname, "../../public/temp/downloads");
+  const placeHolderPath = path.join(__dirname, "../../public/temp/placeholder");
+  await fs.ensureDir(downloadPath);
+  await fs.ensureDir(placeHolderPath);
+
+  switch (test.category) {
+    case TEST_CATEGORIES.REGRESSION_TEST:
+    case TEST_CATEGORIES.FUNCTIONAL_TEST:
+    case TEST_CATEGORIES.VISUAL_TEST: {
+      const playwrightReportPath = path.join(testPath, "playwright-report");
+      const playwrightReportHtmlPath = path.join(playwrightReportPath, "index.html");
+
+      if (!fs.existsSync(playwrightReportHtmlPath)) {
+        return res.status(404).json({
+          isSuccess: false,
+          msg: "Test Report not found!!!",
+        });
+      }
+
+      const placeholderPackagePath = path.join(placeHolderPath, test.name);
+
+      if (fs.existsSync(placeholderPackagePath)) await fs.remove(placeholderPackagePath);
+
+      await fs.copy(playwrightReportPath, placeholderPackagePath);
+      const downloadFilePath = path.join(downloadPath, `${test.name}.zip`);
+
+      if (fs.existsSync(downloadFilePath)) await fs.unlink(downloadFilePath);
+
+      zipper.sync.zip(placeholderPackagePath).compress().save(downloadFilePath);
+
+      return res.download(downloadFilePath);
+    }
+
+    case TEST_CATEGORIES.MLR_PKG: {
+      const pdfPath = path.join(testPath, "tests/output/output.pdf");
+      if (!fs.existsSync(pdfPath)) {
+        return res.status(404).json({
+          isSuccess: false,
+          msg: "MLR PDF not found!!!",
+        });
+      }
+
+      const placeholderPackagePath = path.join(placeHolderPath, test.name);
+      if (fs.existsSync(placeholderPackagePath)) await fs.remove(placeholderPackagePath);
+
+      const screenshotsPath = path.join(testPath, "tests/mlr.spec.ts-snapshots");
+
+      const now = new Date();
+      const options = { timeZone: "Asia/Kolkata" }; // Indian Standard Time (IST)
+      const indianTimeString = now.toLocaleString("en-IN", options);
+      const formattedIndianTimeString = indianTimeString.replaceAll("/", "-").replaceAll(",", "").replaceAll(":", "-");
+
+      const placeholderPackagePdfPath = path.join(placeholderPackagePath, `output-${formattedIndianTimeString}.pdf`);
+
+      if (fs.existsSync(screenshotsPath)) await fs.copy(screenshotsPath, placeholderPackagePath);
+      await fs.copy(pdfPath, placeholderPackagePdfPath);
+
+      if (!fs.existsSync(placeholderPackagePdfPath)) {
+        return res.status(404).json({
+          isSuccess: false,
+          msg: "Unable to download MLR PDF. Please get in touch with admin!!!",
+        });
+      }
+
+      const downloadFilePath = path.join(downloadPath, `${test.name}.zip`);
+
+      if (fs.existsSync(downloadFilePath)) await fs.unlink(downloadFilePath);
+
+      zipper.sync.zip(placeholderPackagePath).compress().save(downloadFilePath);
+
+      return res.download(downloadFilePath);
+    }
+
+    default: {
+      return res.status(404).json({
+        isSuccess: false,
+        msg: "Download feature is not yet supported for this test category!!!",
+      });
+    }
+  }
+};
+
+export const renameTest = async (req, res) => {
+  const { body, test } = req;
+  const { webApp } = test;
+
+  const preExistingTest = await getTestByNameService(body.name, test.category, webApp._id);
+
+  if (preExistingTest) {
+    return res.json({
+      isSuccess: false,
+      preExistingTest: preExistingTest,
+    });
+  }
+
+  await renameTestService(test._id, body.name);
+
+  const testCategoryPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category
+  );
+
+  const testOldPath = path.join(testCategoryPath, test.name);
+  const testNewPath = path.join(testCategoryPath, body.name);
+
+  await fs.rename(testOldPath, testNewPath);
+
+  return res.json({
+    isSuccess: true,
+    msg: "Test Renamed Successfully!!!"
+  })
+}
+
+export const getTestConfigJsonCode = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const configJsonPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "config.json"
+  );
+
+  if(!fs.existsSync(configJsonPath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "Config.json not found!!!"
+    });
+  }
+
+  let configJsonCode = null;
+
+  if(test.category === TEST_CATEGORIES.REGRESSION_TEST) {
+    configJsonCode = await readJSON(configJsonPath);
+    configJsonCode.mainUrl = test.mainUrl;
+    configJsonCode.refUrl = test.refUrl;
+
+    configJsonCode = JSON.stringify(configJsonCode, null, 2);
+  } else {
+    configJsonCode = JSON.stringify(await readJSON(configJsonPath), null, 2);
+  }
+
+  return res.json({
+    isSuccess: true,
+    jsonText: configJsonCode
+  });
+}
+
+export const getTestPlaywrightConfigCode = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const playwrightConfigCodePath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "playwright.config.ts"
+  );
+
+  if(!fs.existsSync(playwrightConfigCodePath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "Playwright.config.ts not found!!!"
+    });
+  }
+
+  const playwrightConfigCode = await fs.readFile(playwrightConfigCodePath, "utf-8");
+
+  return res.json({
+    isSuccess: true,
+    codeText: playwrightConfigCode
+  });
+}
+
+export const getTestFunctionalSpecTsCode = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const functionalSpecTsCodePath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "tests/functional.spec.ts"
+  );
+
+  if(!fs.existsSync(functionalSpecTsCodePath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "Functional.spec.ts not found!!!"
+    });
+  }
+
+  const functionalSpecTsCode = await fs.readFile(functionalSpecTsCodePath, "utf-8");
+
+  return res.json({
+    isSuccess: true,
+    codeText: functionalSpecTsCode
+  });
+}
+
+export const getTestBrowserJSON = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const browserJSONPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "browser.json"
+  );
+
+  const errMsg = "Device configuration not found!!!";
+
+  if(!fs.existsSync(browserJSONPath)) {
+    return res.json({
+      isSuccess: false,
+      deviceError: true,
+      msg: errMsg
+    });
+  }
+
+  const browserJSON = await fs.readJSON(browserJSONPath);
+
+  if(browserJSON.device) {
+    return res.json({
+      isSuccess: true,
+      device: { value: browserJSON.device, label: `${browserJSON.device} | ${browserJSON.name}` }
+    });
+  } else return res.json({
+    isSuccess: false,
+    deviceError: true,
+    msg: errMsg
+  });
+}
+
+export const getTestUploadedImages = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const imagesPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "ref-images"
+  );
+
+  if(!fs.existsSync(imagesPath)) {
+    return res.json({
+      isSuccess: false,
+      msg: "Images not found!!!"
+    });
+  }
+
+  const imageNames = await fs.readdir(imagesPath);
+
+  return res.json({
+    isSuccess: true,
+    imageNames: imageNames
+  });
+}
+
+export const getImage = async (req, res) => {
+  const { test } = req;
+  const { webApp } = test;
+
+  const imagePath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement,
+    webApp.name,
+    test.category,
+    test.name,
+    "ref-images",
+    req.params[0]
+  );
+
+  if(!fs.existsSync(imagePath)) {
+    return res.send(`<html><h1>${req.params[0]} Not Found</h1></html>`)
+  }
+
+  return res.sendFile(imagePath);
+}
+
+export const renameWebApp = async (req, res) => {
+  const { body, webApp } = req;
+
+  const { name: newName } = body;
+
+  const preExistingWebApp = await getWebAppByNameService(newName, webApp.engagement);
+
+  if(preExistingWebApp) {
+    return res.json({
+      isSuccess: false,
+      preExistingWebApp: preExistingWebApp
+    });
+  }
+
+  await renameWebAppService(webApp._id, newName);
+
+  const engagementPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement
+  );
+
+  const webAppOldPath = path.join(engagementPath, webApp.name);
+  const webAppNewPath = path.join(engagementPath, newName);
+
+  await fs.rename(webAppOldPath, webAppNewPath);
+
+  return res.json({
+    isSuccess: true,
+    msg: "Web App Renamed Successfully!!!"
+  });
+}
+
+export const deleteWebApp = async (req, res) => {
+  const { webApp } = req;
+  const testIds =  webApp.tests.map((test) => test._id);
+
+  await deleteWebAppService(webApp._id, testIds);
+
+  const engagementPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    webApp.engagement
+  );
+
+  const webAppPath = path.join(engagementPath, webApp.name);
+
+  await fs.remove(webAppPath);
+
+  const engagementContents = await fs.readdir(engagementPath);
+  if(engagementContents.length === 0) await fs.remove(engagementPath);
+
+  return res.json({
+    isSuccess: true,
+    msg: `Web App ${webApp.name} deleted successfully!!!`
+  });
+}
+
+export const updateWebAppEngagement = async (req, res) => {
+  const { webApp } = req;
+  
+  const { engagement: newEngagement } = req.body;
+
+  const { engagement: oldEngagement, name: webAppName } = webApp;
+
+  const preExistingWebApp = await getWebAppByNameService(webAppName, newEngagement);
+
+  if (preExistingWebApp) {
+    return res.json({
+      isSuccess: false,
+      preExistingWebApp: preExistingWebApp,
+    });
+  }
+
+  await updateWebAppEngagementService(webApp._id, newEngagement);
+
+  const oldWebAppPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    oldEngagement,
+    webAppName
+  );
+
+  const newWebAppPath = path.join(
+    __dirname,
+    "../../public/web_apps",
+    newEngagement,
+    webAppName
+  );
+
+  await fs.move(oldWebAppPath, newWebAppPath);
+
+  return res.json({
+    isSuccess: true,
+    msg: 'Updated Engagement successfully!!',
+  });  
+}

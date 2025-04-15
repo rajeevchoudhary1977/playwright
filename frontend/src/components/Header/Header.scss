@@ -1,0 +1,80 @@
+#header {
+  position: relative;
+  width: 100%;
+  top: 0;
+  z-index: 100;
+  box-shadow: 5px 3px 15px #d0d0cf;
+
+  .bg-light {
+    background-color: #16487b;
+  }
+
+  .navbar {
+    background: url(../../images/favicon_1.png) left center no-repeat;
+    background-size: 35px;
+    padding: 2px 0px;
+  }
+
+  .navbar-brand {
+    color: #fff;
+    padding: 0px 10px 5px 10px;
+    margin-left: 57px;
+    /* // background: url(../../images/dsplogo-blue.png); */
+    // background: url(../../images/web-studio-logo.png);
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: 1;
+    width: 140px;
+    height: 35px;
+
+    .blue-header {
+      color: #034ea2;
+    }
+
+    .pink-header {
+      color: #ed0677;
+    }
+  }
+
+  .nav-link {
+    color: #000000;
+    margin-right: 2px;
+
+    &.active {
+      background-color: #ED0677;
+      color: #fff;
+    }
+
+    &:hover {
+      background-color: #ED0677;
+      color: #fff;
+    }
+  }
+
+  .logout{
+    color: #322b2b;
+    border-radius: 0px;
+    background-color: transparent;
+    padding: 5px 10px;
+    border: 1px solid #d0d0cf !important;
+    &:hover {
+      background-color: #034ea2;
+      color: #fff;
+    }
+  }
+}
+
+#header {
+  .help {
+    margin-right: 20px;
+    color: #322b2b;
+
+    &:hover {
+      color: #4a2df1;
+    }
+  }
+}
+
+.admin{
+  pointer-events: none;
+}
